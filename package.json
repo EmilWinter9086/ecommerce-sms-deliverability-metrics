@@ -1,0 +1,14 @@
+{
+  "name": "ecommerce-sms-deliverability-metrics",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "tsx src/order_notification.ts",
+    "demo": "tsx scripts/send-order-update.ts",
+    "test": "tsx --test test/order_notification.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": { "zod": "^3.23.8" },
+  "devDependencies": { "tsx": "^4.19.0", "typescript": "^5.6.0", "@types/node": "^22.0.0" }
+}
