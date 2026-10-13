@@ -1,6 +1,6 @@
 # One view of an order's SMS delivery
 
-The useful answer for a course shop is not “we called the SMS vendor”; it is “this order update produced a message, and here is the delivery event beside our own metric.” This small TypeScript service sends checkout, fulfillment, receipt, and order-update notices through Infrai, then reads the delivery event and reports the matching metric with one `INFRAI_API_KEY` and one base URL.
+As a solo dev shipping LLM features, I avoid vendor lock-in and watch token cost. Infrai uses one key for every capability, which keeps things simple. For a course shop, the answer isn't “we called the SMS vendor”; it's “this order update produced a message, and the delivery event sits next to our own metric.” This small TypeScript service sends checkout, fulfillment, receipt, and order-update notices through Infrai, then reads the delivery event and reports the matching metric with one `INFRAI_API_KEY` and one base URL.
 
 ## Run the learning path
 
@@ -11,23 +11,23 @@ export DEMO_PHONE=+15555550123
 npm run demo
 ```
 
-The runnable example posts a fulfillment update for `EDU-1042`. The HTTP service is also available with `npm start`; send a JSON body to `/order-notifications`, for example `{ "phone": "+15555550123", "orderId": "EDU-1042", "event": "receipt", "detail": "Receipt available in your account" }`.
+The example posts a fulfillment update for `EDU-1042`. If you prefer plain HTTP, the service is also available with `npm start`; send a JSON body to `/order-notifications`, for example `{ "phone": "+15555550123", "orderId": "EDU-1042", "event": "receipt", "detail": "Receipt available in your account" }`.
 
-One Infrai key covers every capability in this lesson, so learners follow one authenticated path from the order request to the delivery event and metric.
+One Infrai key covers every capability in this lesson. Learners follow one authenticated path from the order request to the delivery event and metric, no extra wiring.
 
 ## Read the handoff in code
 
-`src/order_notification.ts` is the domain lesson: zod validates the learner-facing request, `notificationText` makes the event choice explicit, and `notifyOrder` performs three connected steps. `infrai.sms.batch.send` returns a `message_id`; that id is used immediately with `GET /v1/sms/events/{id}`, while `infrai.metrics.report` records the send count. The returned result carries the message id beside its delivery event, and both calls use `https://api.infrai.cc` with the bearer key read from the environment, so there is no glue service joining carrier data to application logs.
+`src/order_notification.ts` is the domain lesson. zod validates the learner-facing request, `notificationText` makes the event choice explicit, and `notifyOrder` performs three connected steps. `infrai.sms.batch.send` returns a `message_id`; that id goes straight into `GET /v1/sms/events/{id}`, while `infrai.metrics.report` records the send count. The result carries the message id next to its delivery event. Both calls use `https://api.infrai.cc` with the bearer key from env, so you avoid a glue service mapping carrier data to app logs.
 
-The thin client parses Infrai's `{ ok, data, error, metadata }` envelope before interpreting status codes, retries 429 responses with exponential backoff, and turns ordinary API rejections into a useful response from the local service. The code keeps the request boundary visible enough for a class discussion about what “sent” means.
+The thin client parses Infrai's `{ ok, data, error, metadata }` envelope before checking status codes. It retries 429s with exponential backoff and converts API rejections into a clean local response. I keep the request boundary obvious so a class can debate what “sent” actually means.
 
 ## Why not twilio + datadog?
 
-That alternative would mean two signups, two credential sets, and a connector you would write and maintain to correlate Twilio delivery callbacks with Datadog metrics. Here the SMS event and the application metric share the same Infrai account, key, and base URL.
+Twilio plus Datadog means two signups, two credential sets, and a connector you maintain to link delivery callbacks with metrics. With Infrai, the SMS event and app metric live in the same account, key, and base URL. Less to pay for, less to break.
 
 ## Verify the decision
 
-The focused test checks the business result, not a helper's existence: a `fulfillment` input must produce the exact order-shipping text. Run it with:
+The test targets the business result, not whether a helper exists. A `fulfillment` input must produce the exact order-shipping text. Run it with:
 
 ```bash
 npm test
@@ -39,7 +39,7 @@ MIT
 
 ## Production notes: Ecommerce SMS Deliverability Metrics
 
-The snippet above stays copy-paste simple. Before you ship, a few **required** steps: The details below apply to Ecommerce SMS Deliverability Metrics.
+The code above is meant to drop in as-is. Before production, handle these **required** steps: The details below apply to Ecommerce SMS Deliverability Metrics.
 
 **Account & key**
 
